@@ -1,0 +1,10 @@
+ services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: wison:latest
+    container_name: wison
+    env_file:
+      - .env
