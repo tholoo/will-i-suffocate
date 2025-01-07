@@ -8,6 +8,7 @@ use tokio::time::timeout;
 // BEGIN WAQI Data Model //
 // --------------------- //
 
+#[allow(unused)]
 #[derive(Debug, Deserialize)]
 struct ApiResponse {
     status: String,
@@ -151,11 +152,10 @@ async fn get_city_pollution_emoji(city: &str) -> Result<String, Box<dyn std::err
         .next()
         .ok_or("Failed to parse date")?;
 
+    let (emoji, progress_bar) = air_quality_to_emoji(aqi_level.level(), aqi_level.aqi());
     let mut text = format!(
-        "{}\n{} {}\n",
-        data.city.name,
-        current_date,
-        air_quality_to_emoji(aqi_level.level(), aqi_level.aqi())
+        "{}\n{} {}\n{}\n",
+        data.city.name, emoji, current_date, progress_bar
     );
 
     if let Some(forecast_list) = data.forecast.daily.get(dominant) {
@@ -166,9 +166,9 @@ async fn get_city_pollution_emoji(city: &str) -> Result<String, Box<dyn std::err
                 let forecast_aqi_level = calc_aqi_by_name(dominant, forecast_val)
                     .map_err(|e| format!("Forecast AQI calc failed for {dominant}: {e}"))?;
 
-                let emoji =
+                let (emoji, progress_bar) =
                     air_quality_to_emoji(forecast_aqi_level.level(), forecast_aqi_level.aqi());
-                text.push_str(&format!("{} {}\n", day.day, emoji));
+                text.push_str(&format!("{} {}\n{}\n", emoji, day.day, progress_bar));
             }
         }
     }
@@ -196,13 +196,14 @@ async fn get_city_pollution(city: &str) -> Result<PollutionData, Box<dyn std::er
     }
 }
 
-fn air_quality_to_emoji(level: AirQualityLevel, aqi: u32) -> String {
+fn air_quality_to_emoji(level: AirQualityLevel, aqi: u32) -> (String, String) {
     use AirQualityLevel::*;
 
     let progress_bar_size = 10;
     let progress = ((aqi.min(500) as f64) / 25.0).ceil() as usize;
     let progress = progress.min(progress_bar_size);
     let progress_bar: String = "█".repeat(progress) + &"░".repeat(progress_bar_size - progress);
+    let progress_bar = format!("{} [{}] {}", "🌳", progress_bar, "💀");
 
     let emoji = match level {
         Good => "💚",
@@ -213,7 +214,7 @@ fn air_quality_to_emoji(level: AirQualityLevel, aqi: u32) -> String {
         Hazardous => "🖤",
     };
 
-    format!("{} [{}]", emoji, progress_bar)
+    (emoji.into(), progress_bar)
 }
 
 fn calc_aqi_by_name(pollutant: &str, value: f64) -> Result<AirQuality, String> {
