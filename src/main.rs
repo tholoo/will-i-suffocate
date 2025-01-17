@@ -154,8 +154,8 @@ async fn get_city_pollution_emoji(city: &str) -> Result<String, Box<dyn std::err
 
     let (emoji, progress_bar) = air_quality_to_emoji(aqi_level.level(), aqi_level.aqi());
     let mut text = format!(
-        "{}\n{} {}\n{}\n",
-        data.city.name, emoji, current_date, progress_bar
+        "💚➔ 💛➔ 🧡➔ ❤️➔ 💜➔ 🖤\n{}\n{} {}\n{}\n",
+        data.city.name, current_date, emoji, progress_bar
     );
 
     if let Some(forecast_list) = data.forecast.daily.get(dominant) {
@@ -168,7 +168,7 @@ async fn get_city_pollution_emoji(city: &str) -> Result<String, Box<dyn std::err
 
                 let (emoji, progress_bar) =
                     air_quality_to_emoji(forecast_aqi_level.level(), forecast_aqi_level.aqi());
-                text.push_str(&format!("{} {}\n{}\n", emoji, day.day, progress_bar));
+                text.push_str(&format!("{} {}\n{}\n", day.day, emoji, progress_bar));
             }
         }
     }
